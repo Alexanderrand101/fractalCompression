@@ -6,25 +6,23 @@ G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(31
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(41): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(48): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(56): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(422): warning : variable "affineOffsetOfSnap" was declared but never referenced
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(690): warning : variable "found" was declared but never referenced
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(1034): warning : variable "blueblocks2" was declared but never referenced
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(1035): warning : variable "redblocks2" was declared but never referenced
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(1036): warning : variable "greenblocks2" was declared but never referenced
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(533): warning : variable "affineOffsetOfSnap" was declared but never referenced
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(801): warning : variable "found" was declared but never referenced
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(19): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(31): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(41): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(48): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(56): warning : declaration requires a typedef name
   kernel.cu
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(870): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(883): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(912): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(914): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(916): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(918): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(920): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(922): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(924): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(926): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(425): warning C4244: 'initializing' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(981): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(994): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1023): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1025): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1027): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1029): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1031): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1033): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1035): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1037): warning C4244: 'argument' : conversion from 'float' to 'int', possible loss of data
   fractalCompression.vcxproj -> G:\Новая папка (2)\fractalCompression\x64\Debug\fractalCompression.exe
