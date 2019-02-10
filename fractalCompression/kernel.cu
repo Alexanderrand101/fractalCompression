@@ -26,7 +26,7 @@ typedef struct BLOCKCODE //todo. correct the size
 	int ydoffset;
 	byte transformType;
 	int blockSize;
-	float brightnessDifference;
+	byte brightnessDifference;
 	float contrastCoefficient;
 };
 
@@ -362,6 +362,16 @@ byte evaluate(int value)
 	return i;
 }
 
+byte evaluate(byte value)
+{
+	byte i = 0;
+	while (value >> i > 0)
+	{
+		i++;
+	}
+	return i;
+}
+
 byte evaluateBlockLengthInBits(int blocksize, int maxheight, int maxwidth)
 {
 	return 5 + evaluate(maxheight / blocksize) + evaluate(maxwidth / blocksize) + (sizeof(byte) + sizeof(float)) * 8;
@@ -405,44 +415,161 @@ byte* floatToByteArr(float value)
 	return arr;
 }
 
-//to do -> fix offsetcalcualatng functions. also length
-byte* blockcodeToBitStream(BLOCKCODE* blockcode, int maxblocksize, int maxwidth, int maxheight, byte* bytelength, byte* lastbyteoffset)
+int minbytesforbits(int bitsize)
 {
-	byte length = evaluateBlockLengthInBits(blockcode->blockSize, maxheight, maxwidth);
-	byte* bitstream = new byte[length / 8 + (((length) % 8 > 0) ? 1 : 0)];
-	byte sizecode = (maxblocksize / (blockcode->blockSize) == 8 ? 3 : (maxblocksize / (blockcode->blockSize)) >> 1);
+	return bitsize / 8 + (bitsize % 8 > 0 ? 1 : 0);
+}
+
+byte blockSizeToCode(int blocksize, int maxblocksize)
+{
+	return evaluate(maxblocksize / blocksize) - 1;
+}
+
+int codeToBlockSize(byte code, int maxblocksize)
+{
+	return maxblocksize / (1 << code);
+}
+
+void voodo(byte* toflip)
+{
+	byte frst = toflip[0];
+	byte scnd = toflip[1];
+	toflip[0] = toflip[3];
+	toflip[1] = toflip[2];
+	toflip[3] = frst;
+	toflip[2] = scnd;
+}
+
+void copyBits(byte* dst, byte* src, int *destoffset, int srcoffset, int bitlength)
+{
+	int dstbitoffset = *destoffset % 8;
+	int srcbitoffset = srcoffset % 8;
+	dst += *destoffset / 8;
+	src += srcoffset / 8;
+	*destoffset += bitlength;
+	for (; bitlength > 0; bitlength -= 8)
+	{
+		byte transfer = *src << srcbitoffset;
+		src++;
+		if(srcbitoffset != 0 && srcbitoffset + bitlength > 8)
+			transfer |= *src >> (8 - srcbitoffset);
+		*dst &= (0xFF << (8 - dstbitoffset));
+		*dst |= transfer >> dstbitoffset;
+		dst++;
+		if (dstbitoffset != 0 && dstbitoffset + bitlength > 8)
+		{
+			*dst = 0;
+			*dst |= transfer << (8 - dstbitoffset);
+		}
+	}	
+}
+
+//to do -> fix offsetcalcualatng functions. also length
+byte* blockcodeToBitStream(BLOCKCODE* blockcode, int maxblocksize, int maxwidth, int maxheight, byte* length)
+{
+	*length = evaluateBlockLengthInBits(blockcode->blockSize, maxheight, maxwidth);
+	byte* bitstream = new byte[minbytesforbits(*length)];
+	byte sizecode = blockSizeToCode(blockcode->blockSize, maxblocksize);
 	*bitstream = sizecode << 6;
-	byte widthlength = evaluate(maxwidth / blockcode->blockSize) / 8 ;
-	byte heightlength = 0;
-	byte bitoffset = 2;
-	byte widthoffset = evaluate(maxwidth / blockcode->blockSize) % 8;
-	byte* widtharr1 = intToByteArr(blockcode->xdoffset / blockcode->blockSize, &widthlength);
-	alignleft(widtharr1, widthlength, 8 - widthoffset);
-	byte heightoffset = evaluate(maxheight / blockcode->blockSize) % 8;
-	byte* heightarr1 = intToByteArr(blockcode->ydoffset / blockcode->blockSize, &heightlength);
-	alignleft(heightarr1, heightlength, 8 - heightoffset);
-	bitstream = slambitstogether(bitstream, widtharr1, &bitoffset, widthlength, widthoffset);
-	bitstream = slambitstogether(bitstream, heightarr1, &bitoffset, heightlength, heightoffset);
-	byte brigtnessOffset = blockcode->brightnessDifference;
-	bitstream = slambitstogether(bitstream, &brigtnessOffset, &bitoffset, 1, 0);
-	byte* floatinbytes = floatToByteArr(blockcode->contrastCoefficient);
-	bitstream = slambitstogether(bitstream, floatinbytes, &bitoffset, 4, 0);
-	delete[] widtharr1;
-	delete[] heightarr1;
-	delete[] floatinbytes;
+	*bitstream |= blockcode->transformType << 3;
+	int bitstreamoffset = 5;
+	int xbitoffset = 32 - evaluate(maxwidth / blockcode->blockSize);
+	int ybitoffset = 32 - evaluate(maxheight / blockcode->blockSize);
+	int compoffdx = blockcode->xdoffset / blockcode->blockSize;
+	int compoffdy = blockcode->ydoffset / blockcode->blockSize;
+	voodo((byte*)&compoffdx);
+	voodo((byte*)&compoffdy);
+	copyBits(bitstream, (byte*)&compoffdx, &bitstreamoffset, xbitoffset, 32 - xbitoffset);
+	copyBits(bitstream, (byte*)&compoffdy, &bitstreamoffset, ybitoffset, 32 - ybitoffset);
+	copyBits(bitstream, &(blockcode->brightnessDifference), &bitstreamoffset, 0, 8);
+	copyBits(bitstream, (byte*)&(blockcode->contrastCoefficient), &bitstreamoffset, 0, 32);
 	return bitstream;
 }
 
-byte* blockcodesToBitStream(BLOCKCODE** blockcodes, int maxblocksize, int maxwidth, int maxheight, int codecount, int* streambytelength) 
+BLOCKCODE* bitstreamToBlockCode(byte* bitstream, int maxblocksize, int maxwidth, int maxheight)
 {
-	*streambytelength = 0;
+	BLOCKCODE* blockcode = new BLOCKCODE();
+	blockcode->blockSize = codeToBlockSize(*bitstream >> 6, maxblocksize);
+	blockcode->transformType = (*bitstream & 0x3F) >> 3;
+	int dummyoffset = 0;
+	int bitstreamoffset = 5;
+	int compoffdx = 0;
+	int compoffdy = 0;
+	int xbitoffset = 32 - evaluate(maxwidth / blockcode->blockSize);
+	int ybitoffset = 32 - evaluate(maxheight / blockcode->blockSize);
+	byte brightnessDifference = 0;
+	float contrastCoeff = 0;
+	copyBits((byte*)&compoffdx, bitstream, &xbitoffset, bitstreamoffset, 32 - xbitoffset);
+	bitstreamoffset += evaluate(maxwidth / blockcode->blockSize);
+	voodo((byte*)&compoffdx);
+	compoffdx *= blockcode->blockSize;
+	copyBits((byte*)&compoffdy, bitstream, &ybitoffset, bitstreamoffset, 32 - ybitoffset);
+	bitstreamoffset += evaluate(maxheight / blockcode->blockSize);
+	voodo((byte*)&compoffdy);
+	compoffdy *= blockcode->blockSize;
+	copyBits(&brightnessDifference, bitstream, &dummyoffset, bitstreamoffset, 8);
+	bitstreamoffset += 8;
+	dummyoffset = 0;
+	copyBits((byte*)&contrastCoeff, bitstream, &dummyoffset, bitstreamoffset, 32);
+	bitstreamoffset += 32;
+	dummyoffset = 0;
+	blockcode->xdoffset = compoffdx;
+	blockcode->ydoffset = compoffdy;
+	blockcode->brightnessDifference = brightnessDifference;
+	blockcode->contrastCoefficient = contrastCoeff;
+	return blockcode;
+}
+
+byte* blockcodesToBitStream(BLOCKCODE** blockcodes, int maxblocksize, int maxwidth, int maxheight, int codecount, int* streambitlength) 
+{
+	*streambitlength = 0;
 	for (int i = 0; i < codecount; i++)
 	{
-		(*streambytelength) += evaluateBlockLengthInBits(blockcodes[i]->blockSize, maxheight, maxwidth);
+		(*streambitlength) += evaluateBlockLengthInBits(blockcodes[i]->blockSize, maxheight, maxwidth);
 	}
-	(*streambytelength) = (*streambytelength) / 8 + (((*streambytelength) % 8 > 0) ? 1 : 0);
-	byte* bitstream = new byte[*streambytelength];
+	int l = minbytesforbits(*streambitlength);
+	byte* bitstream = new byte[minbytesforbits(*streambitlength)];
+	int bitstreamoffset = 0;
+	for (int i = 0; i < codecount; i++)
+	{
+		byte blocklength = 0;
+		byte* block = blockcodeToBitStream(blockcodes[i], maxblocksize, maxwidth, maxheight, &blocklength);
+		copyBits(bitstream, block, &bitstreamoffset, 0, blocklength);
+		delete[] block;
+	}
 	return bitstream;
+}
+
+BLOCKCODE** bitstreamToBlockCodes(byte* bitstream, int maxblocksize, int maxwidth, int maxheight, int *codecount, int streambitlength)
+{
+	*codecount = 0;
+	int offset = 0;
+	while (offset < streambitlength) 
+	{
+		byte sizecode = 0;
+		int dummyoffset = 6;
+		copyBits(&sizecode, bitstream, &dummyoffset, offset, 2);
+		int blocksize = codeToBlockSize(sizecode, maxblocksize);
+		offset += evaluateBlockLengthInBits(blocksize, maxheight, maxwidth);
+		(*codecount)++;
+	}
+	BLOCKCODE** blockcodes = new BLOCKCODE*[*codecount];
+	offset = 0;
+	for (int i = 0; i < *codecount; i++)
+	{
+		byte sizecode = 0;
+		int dummyoffset = 6;
+		copyBits(&sizecode, bitstream, &dummyoffset, offset, 2);
+		int blocksize = codeToBlockSize(sizecode, maxblocksize);
+		int blocklength = evaluateBlockLengthInBits(blocksize, maxheight, maxwidth);
+		byte* bitblock = new byte[minbytesforbits(blocklength)];
+		dummyoffset = 0;
+		copyBits(bitblock, bitstream, &dummyoffset, offset, blocklength);
+		offset += blocklength;
+		blockcodes[i] = bitstreamToBlockCode(bitblock, maxblocksize, maxwidth, maxheight);
+		delete[] bitblock;
+	}
+	return blockcodes;
 }
 
 __device__ void calcCoeffsDevice2(byte* pixels, byte* domainPixels, int width, int offsetPixels, int offsetDomain, int blocksize, float* brightDiffValue, float* contrastCoefficient,
@@ -1111,15 +1238,31 @@ void decompressBlockCodes(BLOCKCODE** compressedCodes, int startingBlockSize, in
 
 int main()
 {
-	byte length = 0, offst = 0;
+	int length = 0, codecount = 0;
 	BLOCKCODE* code = new BLOCKCODE();
 	code->blockSize = 8;
 	code->brightnessDifference = 100;
 	code->contrastCoefficient = 999;
 	code->transformType = 6;
-	code->xdoffset = 64;
-	code->ydoffset = 32;
-	byte* res = blockcodeToBitStream(code, 16, 160, 320, &length, &offst);
+	code->xdoffset = 6400;
+	code->ydoffset = 64000;
+	BLOCKCODE* code2 = new BLOCKCODE();
+	code2->blockSize = 4;
+	code2->brightnessDifference = 1;
+	code2->contrastCoefficient = 96;
+	code2->transformType = 2;
+	code2->xdoffset = 32;
+	code2->ydoffset = 16;
+	BLOCKCODE* code3 = new BLOCKCODE();
+	code3->blockSize = 16;
+	code3->brightnessDifference = 1;
+	code3->contrastCoefficient = 96;
+	code3->transformType = 2;
+	code3->xdoffset = 160;
+	code3->ydoffset = 400;
+	BLOCKCODE** blockcodes = new BLOCKCODE*[3]{ code, code2, code3 };
+	byte* res = blockcodesToBitStream(blockcodes, 16, 16000, 320000, 3, &length);
+	BLOCKCODE** blockcodes2 = bitstreamToBlockCodes(res, 16, 16000, 320000, &codecount, length);
 	//BITMAPFILEHEADER* fheader = nullptr;
 	//BITMAPINFOHEADER* iheader = nullptr;
 	//fheader = new BITMAPFILEHEADER();
