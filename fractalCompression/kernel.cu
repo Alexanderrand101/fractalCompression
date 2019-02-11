@@ -15,6 +15,7 @@ typedef struct HEADEROFFCOMFILE //todo. correct the size
 	int blueDomainCount;
 	int redDomainCount;
 	int greenDomainCount;
+	int maxblocksize;
 	//int startingblocksize;
 };
 
@@ -1021,6 +1022,17 @@ void SaveCompressed(const char* fname, BITMAPFILEHEADER* fheader, BITMAPINFOHEAD
 		file.write((char*)(redCode[i]), sizeof(BLOCKCODE));
 }
 
+void SaveCompressed2(const char* fname, BITMAPFILEHEADER* fheader, BITMAPINFOHEADER* iheader, HEADEROFFCOMFILE* cheader, byte* bluestream, byte* redstream, byte* greenstream)
+{
+	std::ofstream file(fname, std::ios::binary);
+	file.write((char*)fheader, sizeof(BITMAPFILEHEADER));
+	file.write((char*)iheader, sizeof(BITMAPINFOHEADER));
+	file.write((char*)cheader, sizeof(HEADEROFFCOMFILE));
+	file.write((char*)bluestream, minbytesforbits(cheader->blueDomainCount));
+	file.write((char*)greenstream, minbytesforbits(cheader->greenDomainCount));
+	file.write((char*)redstream, minbytesforbits(cheader->redDomainCount));
+}
+
 int powerOf2Before(int number)
 {
 	int twoInPower = 1;
@@ -1098,6 +1110,31 @@ int LoadCompressed(const char* fname, BITMAPFILEHEADER* fheader, BITMAPINFOHEADE
 		(*redCode)[i] = new BLOCKCODE();
 		file.read((char*)(*redCode)[i], sizeof(BLOCKCODE));
 	}
+	return 0;
+}
+
+int LoadCompressed2(const char* fname, BITMAPFILEHEADER* fheader, BITMAPINFOHEADER* iheader, HEADEROFFCOMFILE* cheader, byte** bluestream, byte** redstream, byte** greenstream)
+{
+	std::ifstream file(fname, std::ios::binary);
+	if (!file)
+	{
+		std::cout << "can't open file " << fname << "\n";
+		return 1;
+	}
+	file.read((char*)fheader, sizeof(BITMAPFILEHEADER));
+	file.read((char*)iheader, sizeof(BITMAPINFOHEADER));
+	file.read((char*)cheader, sizeof(HEADEROFFCOMFILE));
+	if (fheader->bfType != 0x4D42)
+	{
+		std::cout << "file " << fname << "is not a bmp file\n";
+		return 2;
+	}
+	*bluestream = new byte[minbytesforbits(cheader->blueDomainCount)];//чет фигня какаято
+	*greenstream = new byte[minbytesforbits(cheader->redDomainCount)];//чет фигня какаято
+	*redstream = new byte[minbytesforbits(cheader->greenDomainCount)];//чет фигня какаято
+	file.read((char*)*bluestream, minbytesforbits(cheader->blueDomainCount));
+	file.read((char*)*greenstream, minbytesforbits(cheader->greenDomainCount));
+	file.read((char*)*redstream, minbytesforbits(cheader->redDomainCount));
 	return 0;
 }
 
@@ -1199,9 +1236,8 @@ void decompressQuad(BLOCKCODE** compressedCodes, int blockSize, int offsetx, int
 		{
 			if (compressedCodes[*counter]->blockSize == blockSize)
 			{
-				if ((compressedCodes[*counter]->yoffset  != i * blockSize + offsety) 
-					|| (compressedCodes[*counter]->xoffset != j * blockSize + offsetx))
-					std::cout << "\nwe fooped up\n";
+				compressedCodes[*counter]->yoffset = i * blockSize + offsety;
+				compressedCodes[*counter]->xoffset = j * blockSize + offsetx;
 				(*counter)++;
 			}
 			else
@@ -1223,8 +1259,8 @@ void decompressBlockCodes(BLOCKCODE** compressedCodes, int startingBlockSize, in
 		{
 			if (compressedCodes[counter]->blockSize == startingBlockSize)
 			{
-				if ((compressedCodes[counter]->xoffset != i) || (compressedCodes[counter]->yoffset != j))
-					std::cout << "\nwe fooped up\n";
+				compressedCodes[counter]->xoffset = j;
+				compressedCodes[counter]->yoffset = i;
 				counter++;
 			}
 			else
@@ -1236,9 +1272,20 @@ void decompressBlockCodes(BLOCKCODE** compressedCodes, int startingBlockSize, in
 	}
 }
 
+void assertCodes(BLOCKCODE** code1, BLOCKCODE** code2, int size1, int size2)
+{
+	if (size1 != size2)
+		std::cout << "we fooped up globally\n";
+	for (int i = 0; i < size1; i++)
+	{
+		if ((code1[i]->xoffset != code2[i]->xoffset) || (code1[i]->yoffset != code2[i]->yoffset))
+			std::cout << "we fooped up " << i << '\n';
+	}
+}
+
 int main()
 {
-	int length = 0, codecount = 0;
+	/*int length = 0, codecount = 0;
 	BLOCKCODE* code = new BLOCKCODE();
 	code->blockSize = 8;
 	code->brightnessDifference = 100;
@@ -1262,29 +1309,29 @@ int main()
 	code3->ydoffset = 400;
 	BLOCKCODE** blockcodes = new BLOCKCODE*[3]{ code, code2, code3 };
 	byte* res = blockcodesToBitStream(blockcodes, 16, 16000, 320000, 3, &length);
-	BLOCKCODE** blockcodes2 = bitstreamToBlockCodes(res, 16, 16000, 320000, &codecount, length);
-	//BITMAPFILEHEADER* fheader = nullptr;
-	//BITMAPINFOHEADER* iheader = nullptr;
-	//fheader = new BITMAPFILEHEADER();
-	//iheader = new BITMAPINFOHEADER();
-	//byte* pixels = nullptr;
-	//byte** reftopixels = &pixels;
-	//LoadPixels("glss.bmp", reftopixels, fheader, iheader);
-	//byte *blue, *red, *green;
-	//blue = new byte[iheader->biHeight * iheader->biWidth];
-	//red = new byte[iheader->biHeight * iheader->biWidth];
-	//green = new byte[iheader->biHeight * iheader->biWidth];
-	//colorChannelSeparator(pixels, blue, green, red, iheader->biWidth, iheader->biHeight);
-	//colorChannelCombinator(pixels, blue, blue, blue, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128b11.bmp", pixels, fheader, iheader);
-	//std::cout << "blue channel total: " << blocksum(blue, iheader->biHeight) << '\n';
-	//colorChannelCombinator(pixels, green, green, green, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128g11.bmp", pixels, fheader, iheader);
-	//std::cout << "green channel total: " << blocksum(green, iheader->biHeight) << '\n';
-	//colorChannelCombinator(pixels, red, red, red, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128r11.bmp", pixels, fheader, iheader);
-	//std::cout << "red channel total " << blocksum(red, iheader->biHeight) << '\n';
-	//HEADEROFFCOMFILE* cheader = new HEADEROFFCOMFILE();
+	BLOCKCODE** blockcodes2 = bitstreamToBlockCodes(res, 16, 16000, 320000, &codecount, length);*/
+	BITMAPFILEHEADER* fheader = nullptr;
+	BITMAPINFOHEADER* iheader = nullptr;
+	fheader = new BITMAPFILEHEADER();
+	iheader = new BITMAPINFOHEADER();
+	byte* pixels = nullptr;
+	byte** reftopixels = &pixels;
+	LoadPixels("glss.bmp", reftopixels, fheader, iheader);
+	byte *blue, *red, *green;
+	blue = new byte[iheader->biHeight * iheader->biWidth];
+	red = new byte[iheader->biHeight * iheader->biWidth];
+	green = new byte[iheader->biHeight * iheader->biWidth];
+	colorChannelSeparator(pixels, blue, green, red, iheader->biWidth, iheader->biHeight);
+	colorChannelCombinator(pixels, blue, blue, blue, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128b11.bmp", pixels, fheader, iheader);
+	std::cout << "blue channel total: " << blocksum(blue, iheader->biHeight) << '\n';
+	colorChannelCombinator(pixels, green, green, green, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128g11.bmp", pixels, fheader, iheader);
+	std::cout << "green channel total: " << blocksum(green, iheader->biHeight) << '\n';
+	colorChannelCombinator(pixels, red, red, red, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128r11.bmp", pixels, fheader, iheader);
+	std::cout << "red channel total " << blocksum(red, iheader->biHeight) << '\n';
+	HEADEROFFCOMFILE* cheader = new HEADEROFFCOMFILE();
 	//BLOCKCODE** blueCode = new BLOCKCODE*[4096];
 	//BLOCKCODE** greenCode = new BLOCKCODE*[4096];
 	//BLOCKCODE** redCode = new BLOCKCODE*[4096];
@@ -1292,9 +1339,9 @@ int main()
 	//BLOCKCODE** greenCode2 = new BLOCKCODE*[4096];
 	//BLOCKCODE** redCode2 = new BLOCKCODE*[4096];
 	//int initialBlockSize = powerOf2Before(min(iheader->biHeight, iheader->biWidth)) / 2;
-	//int blueblocks = 0;
-	//int redblocks = 0;
-	//int greenblocks = 0;
+	int blueblocks = 0;
+	int redblocks = 0;
+	int greenblocks = 0;
 	//int blueblocks2 = 0;
 	//int redblocks2 = 0;
 	//int greenblocks2 = 0;
@@ -1303,9 +1350,21 @@ int main()
 	////fractalCompressionStep3(blue, 0, initialBlockSize, initialBlockSize, &blueblocks, blueCode, iheader->biWidth, iheader->biHeight, 50);
 	////fractalCompressionStep3(blue, initialBlockSize, 0, initialBlockSize, &blueblocks, blueCode, iheader->biWidth, iheader->biHeight, 50);
 	////fractalCompressionStep3(blue, initialBlockSize, initialBlockSize, initialBlockSize, &blueblocks, blueCode, iheader->biWidth, iheader->biHeight, 50);
-	//QUADTREE* blueTree = fractalCompressionStep4(blue, iheader->biWidth, iheader->biHeight, 16, &blueblocks);
-	//blueCode = quadTreeToArray(blueTree, blueblocks);
-	//decompressBlockCodes(blueCode, 16, iheader->biWidth, iheader->biHeight);
+	QUADTREE* blueTree = fractalCompressionStep4(blue, iheader->biWidth, iheader->biHeight, 16, &blueblocks);
+	BLOCKCODE** blueCode = quadTreeToArray(blueTree, blueblocks);
+	int bluelength = 0;
+	byte* bluestream = blockcodesToBitStream(blueCode, 16, iheader->biWidth, iheader->biHeight, blueblocks, &bluelength);
+	QUADTREE* redTree = fractalCompressionStep4(red, iheader->biWidth, iheader->biHeight, 16, &redblocks);
+	BLOCKCODE** redCode = quadTreeToArray(redTree, redblocks);
+	int redlength = 0;
+	byte* redstream = blockcodesToBitStream(redCode, 16, iheader->biWidth, iheader->biHeight, redblocks, &redlength);
+	QUADTREE* greenTree = fractalCompressionStep4(green, iheader->biWidth, iheader->biHeight, 16, &greenblocks);
+	BLOCKCODE** greenCode = quadTreeToArray(greenTree, greenblocks);
+	int greenlength = 0;
+	byte* greenstream = blockcodesToBitStream(greenCode, 16, iheader->biWidth, iheader->biHeight, greenblocks, &greenlength);
+	/*BLOCKCODE** blueCode2 = bitstreamToBlockCodes(res, 16, iheader->biWidth, iheader->biHeight, &blueblocks2, reslength);
+	decompressBlockCodes(blueCode2, 16, iheader->biWidth, iheader->biHeight);
+	assertCodes(blueCode, blueCode2, blueblocks, blueblocks2);*/
 	////red
 	////fractalCompressionStep3(red, 0, 0, initialBlockSize, &redblocks, redCode, iheader->biWidth, iheader->biHeight, 50);
 	////fractalCompressionStep3(red, 0, initialBlockSize, initialBlockSize, &redblocks, redCode, iheader->biWidth, iheader->biHeight, 50);
@@ -1320,49 +1379,67 @@ int main()
 	//fractalCompressionStep3(green, initialBlockSize, initialBlockSize, initialBlockSize, &greenblocks, greenCode, iheader->biWidth, iheader->biHeight, 50);*/
 	//QUADTREE* greenTree = fractalCompressionStep4(green, iheader->biWidth, iheader->biHeight, 16, &greenblocks);
 	//greenCode = quadTreeToArray(greenTree, greenblocks);
-	//cheader->blueDomainCount = blueblocks;
-	//cheader->greenDomainCount = greenblocks;
-	//cheader->redDomainCount = redblocks;
+	cheader->blueDomainCount = bluelength;
+	cheader->greenDomainCount = greenlength;
+	cheader->redDomainCount = redlength;
+	cheader->maxblocksize = 16;
 	//SaveCompressed("fcompressed128_1.frc", fheader, iheader, cheader, blueCode, redCode, greenCode);
-	//delete fheader;
-	//delete[] pixels;
-	//delete[] blue;
-	//delete[] red;
-	//delete[] green;
-	//delete iheader;
+	SaveCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, bluestream, redstream, greenstream);
+	delete fheader;
+	delete[] pixels;
+	delete[] blue;
+	delete[] red;
+	delete[] green;
+	delete iheader;
+	delete[] redstream;
+	delete[] bluestream;
+	delete[] greenstream;
 	//free2Dimensions((byte**)blueCode, cheader->blueDomainCount);
 	//free2Dimensions((byte**)redCode, cheader->redDomainCount);
 	//free2Dimensions((byte**)greenCode, cheader->greenDomainCount);
-	//delete cheader;
+	delete cheader;
 	////endofcompression
 
 	////startofdecompression
-	//fheader = new BITMAPFILEHEADER();
-	//iheader = new BITMAPINFOHEADER(); 
-	//cheader = new HEADEROFFCOMFILE(); 
-	//BLOCKCODE*** ptoblueCode = new BLOCKCODE**();
-	//BLOCKCODE*** ptoredCode = new BLOCKCODE**();
-	//BLOCKCODE*** ptogreenCode = new BLOCKCODE**();
+	fheader = new BITMAPFILEHEADER();
+	iheader = new BITMAPINFOHEADER(); 
+	cheader = new HEADEROFFCOMFILE(); 
+	byte** pbluestream = new byte*();
+	byte** predstream = new byte*();
+	byte** pgreenstream = new byte*();
+	int bluecodecount = 0;
+	int redcodecount = 0;
+	int greencodecount = 0;
+	LoadCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, pbluestream, predstream, pgreenstream);
+	BLOCKCODE** ptoblueCode = bitstreamToBlockCodes(*pbluestream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &bluecodecount, cheader->blueDomainCount);
+	BLOCKCODE** ptoredCode = bitstreamToBlockCodes(*predstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &redcodecount, cheader->redDomainCount);
+	BLOCKCODE** ptogreenCode = bitstreamToBlockCodes(*pgreenstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &greencodecount, cheader->greenDomainCount);
 	//LoadCompressed("fcompressed128_1.frc", fheader, iheader, cheader, ptoblueCode, ptoredCode, ptogreenCode);
-	//byte* bluePixels = fractalDecompressionStep3(*ptoblueCode, iheader->biWidth, iheader->biHeight, cheader->blueDomainCount);
-	//byte* redPixels = fractalDecompressionStep3(*ptoredCode, iheader->biWidth, iheader->biHeight, cheader->redDomainCount);
-	//byte* greenPixels = fractalDecompressionStep3(*ptogreenCode, iheader->biWidth, iheader->biHeight, cheader->greenDomainCount);	
-	//pixels = new byte[iheader->biSizeImage];//чет фигня какаято
-	//colorChannelCombinator(pixels, bluePixels, greenPixels, redPixels, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128_11.bmp", pixels, fheader, iheader);
-	//std::cout << "blue channel total2: " << blocksum(bluePixels, iheader->biHeight) << '\n';
-	//colorChannelCombinator(pixels, bluePixels, bluePixels, bluePixels, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128b121.bmp", pixels, fheader, iheader);
-	//std::cout << "green channel total2: " << blocksum(greenPixels, iheader->biHeight) << '\n';
-	//colorChannelCombinator(pixels, greenPixels, greenPixels, greenPixels, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128g121.bmp", pixels, fheader, iheader);
-	//std::cout << "red channel total2: " << blocksum(redPixels, iheader->biHeight) << '\n';
-	//colorChannelCombinator(pixels, redPixels, redPixels, redPixels, iheader->biWidth, iheader->biHeight);
-	//SavePixels("r128r121.bmp", pixels, fheader, iheader);
-	//delete[] pixels;
-	//delete[] bluePixels;
-	//delete[] greenPixels;
-	//delete[] redPixels;
+	decompressBlockCodes(ptoblueCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	decompressBlockCodes(ptoredCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	decompressBlockCodes(ptogreenCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	//assertCodes(blueCode, ptoblueCode, blueblocks, bluecodecount);
+	//assertCodes(redCode, ptoredCode, redblocks, redcodecount);
+	//assertCodes(greenCode, ptogreenCode, greenblocks, greencodecount);
+	byte* bluePixels = fractalDecompressionStep3(ptoblueCode, iheader->biWidth, iheader->biHeight, bluecodecount);
+	byte* redPixels = fractalDecompressionStep3(ptoredCode, iheader->biWidth, iheader->biHeight, redcodecount);
+	byte* greenPixels = fractalDecompressionStep3(ptogreenCode, iheader->biWidth, iheader->biHeight, greencodecount);
+	pixels = new byte[iheader->biSizeImage];//чет фигня какаято
+	colorChannelCombinator(pixels, bluePixels, greenPixels, redPixels, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128_11.bmp", pixels, fheader, iheader);
+	std::cout << "blue channel total2: " << blocksum(bluePixels, iheader->biHeight) << '\n';
+	colorChannelCombinator(pixels, bluePixels, bluePixels, bluePixels, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128b121.bmp", pixels, fheader, iheader);
+	std::cout << "green channel total2: " << blocksum(greenPixels, iheader->biHeight) << '\n';
+	colorChannelCombinator(pixels, greenPixels, greenPixels, greenPixels, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128g121.bmp", pixels, fheader, iheader);
+	std::cout << "red channel total2: " << blocksum(redPixels, iheader->biHeight) << '\n';
+	colorChannelCombinator(pixels, redPixels, redPixels, redPixels, iheader->biWidth, iheader->biHeight);
+	SavePixels("r128r121.bmp", pixels, fheader, iheader);
+	delete[] pixels;
+	delete[] bluePixels;
+	delete[] greenPixels;
+	delete[] redPixels;
 	int x;
 	std::cin >> x;
 	return 0;

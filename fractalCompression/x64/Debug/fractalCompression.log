@@ -1,21 +1,21 @@
 ﻿  Compiling CUDA source file kernel.cu...
   
   G:\Новая папка (2)\fractalCompression\fractalCompression>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /Fdx64\Debug\vc120.pdb /FS /Zi /RTC1 /MDd " -o x64\Debug\kernel.cu.obj "G:\Новая папка (2)\fractalCompression\fractalCompression\kernel.cu" 
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(19): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(31): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(41): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(48): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(56): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(661): warning : variable "affineOffsetOfSnap" was declared but never referenced
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(929): warning : variable "found" was declared but never referenced
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(19): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(31): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(41): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(48): warning : declaration requires a typedef name
-G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(56): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(20): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(32): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(42): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(49): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(57): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(662): warning : variable "affineOffsetOfSnap" was declared but never referenced
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(930): warning : variable "found" was declared but never referenced
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(20): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(32): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(42): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(49): warning : declaration requires a typedef name
+G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(57): warning : declaration requires a typedef name
   kernel.cu
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(890): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(986): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1109): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1122): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(891): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(987): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1146): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1159): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
   fractalCompression.vcxproj -> G:\Новая папка (2)\fractalCompression\x64\Debug\fractalCompression.exe
