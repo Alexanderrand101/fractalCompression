@@ -27,7 +27,7 @@ typedef struct BLOCKCODE //todo. correct the size
 	int ydoffset;
 	byte transformType;
 	int blockSize;
-	short brightnessDifference;
+	byte brightnessDifference;
 	float contrastCoefficient;
 };
 
@@ -59,7 +59,7 @@ typedef struct QUADTREE
 byte* somebytes;
 int valoffset = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-byte* padtoSize(byte* pixels, int oldx, int oldy, int newx, int newy)
+byte* padtoSize(byte* pixels, int oldx, int oldy, int newx, int newy) 
 {
 	byte* newPixels = new byte[newx * newy];
 	for (int i = 0; i < oldy; i++)
@@ -283,7 +283,7 @@ double difference(byte* block, byte*  pixels, int offsetX, int offsetY, int n, i
 	{
 		for (int j = 0; j < n; j++)
 		{
-			difference += pow(block[i * n + j] * contrastCoefficient + brightDiffValue - pixels[(offsetY + i) * width + offsetX + j], 2);
+			difference += pow(block[i * n + j] * contrastCoefficient + brightDiffValue - pixels[(offsetY + i) * width +  offsetX + j], 2);
 		}
 	}
 	return difference;
@@ -340,15 +340,15 @@ byte* slambitstogether(byte* target, byte* source, byte* targetbitoffset, byte s
 {
 	for (int i = 0; i < sourcelength; i++)
 	{
-		byte firstpart = source[i] >> *targetbitoffset;
-		byte secondpart = source[i] << (8 - *targetbitoffset);
-		*target |= firstpart;
-		if (secondpart > 0)
-		{
-			target++;
-			*target |= secondpart;
-		}
-	}
+			byte firstpart = source[i] >> *targetbitoffset;
+			byte secondpart = source[i] << (8 - *targetbitoffset);
+			*target |= firstpart;
+			if (secondpart > 0)
+			{
+				target++;
+				*target |= secondpart;
+			}
+ 	}
 	*targetbitoffset = (*targetbitoffset + sourceendoffset) % 8;
 	return target;
 }
@@ -375,7 +375,7 @@ byte evaluate(byte value)
 
 byte evaluateBlockLengthInBits(int blocksize, int maxheight, int maxwidth)
 {
-	return 5 + evaluate(maxheight / blocksize) + evaluate(maxwidth / blocksize) + (sizeof(short) + sizeof(float)) * 8;
+	return 5 + evaluate(maxheight / blocksize) + evaluate(maxwidth / blocksize) + (sizeof(byte) + sizeof(float)) * 8;
 }
 
 void alignleft(byte* bytearr, int length, byte offset)
@@ -452,7 +452,7 @@ void copyBits(byte* dst, byte* src, int *destoffset, int srcoffset, int bitlengt
 	{
 		byte transfer = *src << srcbitoffset;
 		src++;
-		if (srcbitoffset != 0 && srcbitoffset + bitlength > 8)
+		if(srcbitoffset != 0 && srcbitoffset + bitlength > 8)
 			transfer |= *src >> (8 - srcbitoffset);
 		*dst &= (0xFF << (8 - dstbitoffset));
 		*dst |= transfer >> dstbitoffset;
@@ -462,7 +462,7 @@ void copyBits(byte* dst, byte* src, int *destoffset, int srcoffset, int bitlengt
 			*dst = 0;
 			*dst |= transfer << (8 - dstbitoffset);
 		}
-	}
+	}	
 }
 
 //to do -> fix offsetcalcualatng functions. also length
@@ -482,7 +482,7 @@ byte* blockcodeToBitStream(BLOCKCODE* blockcode, int maxblocksize, int maxwidth,
 	voodo((byte*)&compoffdy);
 	copyBits(bitstream, (byte*)&compoffdx, &bitstreamoffset, xbitoffset, 32 - xbitoffset);
 	copyBits(bitstream, (byte*)&compoffdy, &bitstreamoffset, ybitoffset, 32 - ybitoffset);
-	copyBits(bitstream, (byte*)&(blockcode->brightnessDifference), &bitstreamoffset, 0, 16);//can compress this to 9 bits
+	copyBits(bitstream, &(blockcode->brightnessDifference), &bitstreamoffset, 0, 8);
 	copyBits(bitstream, (byte*)&(blockcode->contrastCoefficient), &bitstreamoffset, 0, 32);
 	return bitstream;
 }
@@ -498,7 +498,7 @@ BLOCKCODE* bitstreamToBlockCode(byte* bitstream, int maxblocksize, int maxwidth,
 	int compoffdy = 0;
 	int xbitoffset = 32 - evaluate(maxwidth / blockcode->blockSize);
 	int ybitoffset = 32 - evaluate(maxheight / blockcode->blockSize);
-	short brightnessDifference = 0;
+	byte brightnessDifference = 0;
 	float contrastCoeff = 0;
 	copyBits((byte*)&compoffdx, bitstream, &xbitoffset, bitstreamoffset, 32 - xbitoffset);
 	bitstreamoffset += evaluate(maxwidth / blockcode->blockSize);
@@ -508,8 +508,8 @@ BLOCKCODE* bitstreamToBlockCode(byte* bitstream, int maxblocksize, int maxwidth,
 	bitstreamoffset += evaluate(maxheight / blockcode->blockSize);
 	voodo((byte*)&compoffdy);
 	compoffdy *= blockcode->blockSize;
-	copyBits((byte*)&brightnessDifference, bitstream, &dummyoffset, bitstreamoffset, 16);
-	bitstreamoffset += 16;
+	copyBits(&brightnessDifference, bitstream, &dummyoffset, bitstreamoffset, 8);
+	bitstreamoffset += 8;
 	dummyoffset = 0;
 	copyBits((byte*)&contrastCoeff, bitstream, &dummyoffset, bitstreamoffset, 32);
 	bitstreamoffset += 32;
@@ -521,7 +521,7 @@ BLOCKCODE* bitstreamToBlockCode(byte* bitstream, int maxblocksize, int maxwidth,
 	return blockcode;
 }
 
-byte* blockcodesToBitStream(BLOCKCODE** blockcodes, int maxblocksize, int maxwidth, int maxheight, int codecount, int* streambitlength)
+byte* blockcodesToBitStream(BLOCKCODE** blockcodes, int maxblocksize, int maxwidth, int maxheight, int codecount, int* streambitlength) 
 {
 	*streambitlength = 0;
 	for (int i = 0; i < codecount; i++)
@@ -545,7 +545,7 @@ BLOCKCODE** bitstreamToBlockCodes(byte* bitstream, int maxblocksize, int maxwidt
 {
 	*codecount = 0;
 	int offset = 0;
-	while (offset < streambitlength)
+	while (offset < streambitlength) 
 	{
 		byte sizecode = 0;
 		int dummyoffset = 6;
@@ -573,7 +573,7 @@ BLOCKCODE** bitstreamToBlockCodes(byte* bitstream, int maxblocksize, int maxwidt
 	return blockcodes;
 }
 
-__device__ void calcCoeffsDevice2(byte* pixels, byte* domainPixels, int width, int offsetPixels, int offsetDomain, int blocksize, short* brightDiffValue, float* contrastCoefficient,
+__device__ void calcCoeffsDevice2(byte* pixels, byte* domainPixels, int width, int offsetPixels, int offsetDomain, int blocksize, float* brightDiffValue, float* contrastCoefficient,
 	float paverage, float daverage, float b, float* snapshots, int snapshotoffset)
 {
 	float a = 0;
@@ -597,7 +597,7 @@ __device__ void calcCoeffsDevice2(byte* pixels, byte* domainPixels, int width, i
 	snapshots[snapshotoffset * 9 + 8] = b;
 }
 
-void calcCoeffsHost2(byte* pixels, byte* domainPixels, int width, int offsetPixels, int offsetDomain, int blocksize, short* brightDiffValue, float* contrastCoefficient,
+void calcCoeffsHost2(byte* pixels, byte* domainPixels, int width, int offsetPixels, int offsetDomain, int blocksize, float* brightDiffValue, float* contrastCoefficient,
 	float paverage, float daverage, float b)
 {
 	float a = 0;
@@ -616,7 +616,7 @@ __device__ float calcDiff2(byte* pixels, byte* domainPixels, int width, int offs
 	float paverage, float daverage, float b, float* snapshots, int snapshotoffset)
 {
 	float difference = 0;
-	short brightDiffValue = 0;
+	float brightDiffValue = 0;
 	float contrastCoefficient = 0;
 	calcCoeffsDevice2(pixels, domainPixels, width, offsetPixels, offsetDomain, blocksize, &brightDiffValue, &contrastCoefficient, paverage, daverage, b, snapshots, snapshotoffset);
 	/*snapshots[snapshotoffset * 9] = snapshotoffset;
@@ -642,7 +642,7 @@ float calcDiff2Host(byte* pixels, byte* domainPixels, int width, int offsetPixel
 	float paverage, float daverage, float b)
 {
 	float difference = 0;
-	short brightDiffValue = 0;
+	float brightDiffValue = 0;
 	float contrastCoefficient = 0;
 	calcCoeffsHost2(pixels, domainPixels, width, offsetPixels, offsetDomain, blocksize, &brightDiffValue, &contrastCoefficient, paverage, daverage, b);
 	for (int i = 0; i < blocksize; i++)
@@ -697,7 +697,7 @@ void pickDomainHost(byte* pixels, byte* domainPixels, int n, int m, int blocksiz
 
 BLOCKCODE* obtainNode(QUADNODE* node, int offseti, int offsetj, int blocksize)
 {
-	if (node->blocksize == blocksize)
+	if (node->blocksize == blocksize) 
 	{
 		if (node->blockCode == nullptr) node->blockCode = new BLOCKCODE();
 		return node->blockCode;
@@ -724,7 +724,7 @@ BLOCKCODE* obtainNode(QUADNODE* node, int offseti, int offsetj, int blocksize)
 	}
 }
 
-BLOCKCODE* obtainNodeStart(QUADTREE* quadtree, int offsety, int offsetx, int blocksize)
+BLOCKCODE* obtainNodeStart(QUADTREE* quadtree, int offsety, int offsetx, int blocksize) 
 {
 	int i = offsety / quadtree->startingBlockSize;
 	int j = offsetx / quadtree->startingBlockSize;
@@ -758,16 +758,16 @@ QUADTREE* fractalCompressionStep4(byte* h_pixels, int sizeX, int sizeY, int star
 	cudaMalloc(&d_pixels, sizeX * sizeY * sizeof(byte));
 	cudaMemcpy(d_pixels, h_pixels, sizeX * sizeY * sizeof(byte), cudaMemcpyHostToDevice);
 	int candiateCounter = 0;
-	for (int i = 0; i < sizeY; i += startingBlockSize)
+	for (int i = 0; i < sizeY; i+= startingBlockSize)
 	{
-		for (int j = 0; j < sizeX; j += startingBlockSize)
+		for (int j = 0; j < sizeX; j+= startingBlockSize)
 		{
 			candidates[candiateCounter] = i * sizeX + j;
 			candiateCounter++;
 		}
 	}
 	int blocksize = startingBlockSize;
-	while (candiateCounter > 0)
+	while (candiateCounter > 0) 
 	{
 		int n = sizeY / blocksize;
 		int m = sizeX / blocksize;
@@ -841,7 +841,7 @@ QUADTREE* fractalCompressionStep4(byte* h_pixels, int sizeX, int sizeY, int star
 		for (int i = 0; i < candiateCounter; i++)
 		{
 			float paverage = 0;
-			for (int j = 0; j < blocksize; j++)
+			for (int j = 0; j < blocksize; j++) 
 			{
 				for (int k = 0; k < blocksize; k++)
 				{
@@ -857,21 +857,21 @@ QUADTREE* fractalCompressionStep4(byte* h_pixels, int sizeX, int sizeY, int star
 		for (int i = 0; i < candiateCounter; i++)
 		{
 			dim3 dimBlock(n, m);//dimension count is wrong. fix later
-			pickDomain << <dimBlock, 1 >> >(d_pixels, d_domainPixels, n, m, blocksize, candidates[i], d_domainAverage, d_domainCoeffB, h_rangeAverage[i], d_resultsArray, d_snapshots);
+			pickDomain<<<dimBlock, 1>>>(d_pixels, d_domainPixels, n, m, blocksize, candidates[i], d_domainAverage, d_domainCoeffB, h_rangeAverage[i], d_resultsArray, d_snapshots);
 			cudaMemcpy(h_resultsArray, d_resultsArray, domainCount * 8 * sizeof(float), cudaMemcpyDeviceToHost);
 			cudaMemcpy(h_snapshots, d_snapshots, domainCount * 8 * 9 * sizeof(float), cudaMemcpyDeviceToHost);
 			//pickDomainHost(h_pixels, h_domainPixels, n, m, blocksize, candidates[i], h_domainAverage, h_domainCoeffB, h_rangeAverage[i], h_resultsArray);
 			float mindiff = h_resultsArray[0];
 			int minj = 0;
 			for (int j = 0; j < domainCount * 8; j++) {
-				if (mindiff > h_resultsArray[j])
+				if (mindiff > h_resultsArray[j]) 
 				{
 					mindiff = h_resultsArray[j];
 					minj = j;
 				}
 			}
 			mindiff = mindiff / (blocksize * blocksize);
-			if (blocksize < 8 || mindiff < 500) {
+			if (blocksize < 8 || mindiff < 50) {
 				BLOCKCODE* blockCode = obtainNodeStart(codes, candidates[i] / sizeX, candidates[i] % sizeX, blocksize);
 				blockCode->blockSize = blocksize;
 				blockCode->xoffset = candidates[i] % sizeX;
@@ -883,10 +883,10 @@ QUADTREE* fractalCompressionStep4(byte* h_pixels, int sizeX, int sizeY, int star
 				blockCode->transformType = affinetransf;
 				blockCode->ydoffset = offsetdY;
 				blockCode->xdoffset = offsetdX;
-				short brightDiffValue = 0;
+				float brightDiffValue = 0;
 				float contrastCoefficient = 0;
 				int offsetDomain = affinetransf * domainCount * blocksize * blocksize + offsetdY * sizeX + offsetdX;
-				calcCoeffsHost2(h_pixels, h_domainPixels, sizeX, candidates[i], offsetDomain, blocksize, &brightDiffValue, &contrastCoefficient,
+				calcCoeffsHost2(h_pixels, h_domainPixels, sizeX, candidates[i], offsetDomain, blocksize, &brightDiffValue, &contrastCoefficient, 
 					h_rangeAverage[i], h_domainAverage[nonaffoffset], h_domainCoeffB[nonaffoffset]);
 				blockCode->brightnessDifference = brightDiffValue;
 				blockCode->contrastCoefficient = contrastCoefficient;
@@ -895,8 +895,8 @@ QUADTREE* fractalCompressionStep4(byte* h_pixels, int sizeX, int sizeY, int star
 			else {
 				newCandidates[newCandidateCounter++] = candidates[i];
 				newCandidates[newCandidateCounter++] = candidates[i] + blocksize / 2;
-				newCandidates[newCandidateCounter++] = candidates[i] + sizeX * blocksize / 2;
-				newCandidates[newCandidateCounter++] = candidates[i] + sizeX * blocksize / 2 + blocksize / 2;
+				newCandidates[newCandidateCounter++] = candidates[i] + sizeX * blocksize/2;
+				newCandidates[newCandidateCounter++] = candidates[i] + sizeX * blocksize / 2 + blocksize/2;
 			}
 		}
 		delete[] candidates;
@@ -1041,7 +1041,7 @@ int powerOf2Before(int number)
 	return twoInPower;
 }
 
-void insertQuadNodeIntoArray(QUADNODE* node, BLOCKCODE** blockCodes, int* blockcounter)
+void insertQuadNodeIntoArray(QUADNODE* node, BLOCKCODE** blockCodes, int* blockcounter) 
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -1057,11 +1057,11 @@ void insertQuadNodeIntoArray(QUADNODE* node, BLOCKCODE** blockCodes, int* blockc
 	}
 }
 
-BLOCKCODE** quadTreeToArray(QUADTREE* qtree, int blockcount)
+BLOCKCODE** quadTreeToArray(QUADTREE* qtree, int blockcount) 
 {
 	BLOCKCODE** blockCodes = new BLOCKCODE*[blockcount];
 	int blockcounter = 0;
-	for (int i = 0; i < qtree->height * qtree->width; i++)
+	for (int i = 0; i < qtree->height * qtree->width; i++) 
 	{
 		if (qtree->quadNodes[i]->blockCode == nullptr)
 		{
@@ -1138,12 +1138,12 @@ int LoadCompressed2(const char* fname, BITMAPFILEHEADER* fheader, BITMAPINFOHEAD
 	return 0;
 }
 
-void copyPixelSquare(byte* from, byte* to, int offsetxf, int offsetyf, int offsetxt, int offsetyt, int n, float brightnessCompr, short diff, int width)
+void copyPixelSquare(byte* from, byte* to, int offsetxf, int offsetyf, int offsetxt, int offsetyt, int n, float brightnessCompr, int diff, int width)
 {
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 		{
-			to[(i + offsetyt) * width + j + offsetxt] = from[(i + offsetyf) * n + j + offsetxf] * brightnessCompr + diff;
+			to[(i + offsetyt) * width +  j + offsetxt] = from[(i + offsetyf) * n + j + offsetxf] * brightnessCompr + diff;
 			if (from[(i + offsetyf) * n + j + offsetxf] * brightnessCompr + diff > 255)
 				to[(i + offsetyt) * width + j + offsetxt] = 255;
 			if (from[(i + offsetyf) * n + j + offsetxf] * brightnessCompr + diff < 0)
@@ -1179,7 +1179,7 @@ byte* fractalDecompressionStep3(BLOCKCODE** blockCodes, int sizex, int sizey, in
 			for (int k = 0; k < sizex; k++)
 				iterPixels[j * sizex + k] = tPixels[j * sizex + k];
 		for (int i = 0; i < blockCount; i++)
-		{
+		{		
 			BLOCKCODE* cblockCode = blockCodes[i];
 			byte* affineTransformed = nullptr;
 			byte* downSized = downsize(iterPixels, cblockCode->xdoffset, cblockCode->ydoffset, cblockCode->blockSize * 2, sizex);
@@ -1224,7 +1224,7 @@ int blocksum(byte* block, int n) {
 	int sum = 0;
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
-			sum += block[i * n + j];
+			sum += block[i * n +j];
 	return sum;
 }
 
@@ -1249,13 +1249,13 @@ void decompressQuad(BLOCKCODE** compressedCodes, int blockSize, int offsetx, int
 	}
 }
 
-void decompressBlockCodes(BLOCKCODE** compressedCodes, int startingBlockSize, int width, int height)
+void decompressBlockCodes(BLOCKCODE** compressedCodes, int startingBlockSize, int width, int height) 
 {
 	//needs more here
 	int counter = 0;
-	for (int i = 0; i < height; i += startingBlockSize)
+	for (int i = 0; i < height; i+= startingBlockSize)
 	{
-		for (int j = 0; j < width; j += startingBlockSize)
+		for (int j = 0; j < width; j += startingBlockSize) 
 		{
 			if (compressedCodes[counter]->blockSize == startingBlockSize)
 			{
@@ -1352,16 +1352,16 @@ int main()
 	////fractalCompressionStep3(blue, initialBlockSize, initialBlockSize, initialBlockSize, &blueblocks, blueCode, iheader->biWidth, iheader->biHeight, 50);
 	QUADTREE* blueTree = fractalCompressionStep4(blue, iheader->biWidth, iheader->biHeight, 16, &blueblocks);
 	BLOCKCODE** blueCode = quadTreeToArray(blueTree, blueblocks);
-	int bluelength = 0;
-	byte* bluestream = blockcodesToBitStream(blueCode, 16, iheader->biWidth, iheader->biHeight, blueblocks, &bluelength);
+	/*int bluelength = 0;
+	byte* bluestream = blockcodesToBitStream(blueCode, 16, iheader->biWidth, iheader->biHeight, blueblocks, &bluelength);*/
 	QUADTREE* redTree = fractalCompressionStep4(red, iheader->biWidth, iheader->biHeight, 16, &redblocks);
 	BLOCKCODE** redCode = quadTreeToArray(redTree, redblocks);
-	int redlength = 0;
-	byte* redstream = blockcodesToBitStream(redCode, 16, iheader->biWidth, iheader->biHeight, redblocks, &redlength);
+	/*int redlength = 0;
+	byte* redstream = blockcodesToBitStream(redCode, 16, iheader->biWidth, iheader->biHeight, redblocks, &redlength);*/
 	QUADTREE* greenTree = fractalCompressionStep4(green, iheader->biWidth, iheader->biHeight, 16, &greenblocks);
 	BLOCKCODE** greenCode = quadTreeToArray(greenTree, greenblocks);
-	int greenlength = 0;
-	byte* greenstream = blockcodesToBitStream(greenCode, 16, iheader->biWidth, iheader->biHeight, greenblocks, &greenlength);
+	/*int greenlength = 0;
+	byte* greenstream = blockcodesToBitStream(greenCode, 16, iheader->biWidth, iheader->biHeight, greenblocks, &greenlength);*/
 	/*BLOCKCODE** blueCode2 = bitstreamToBlockCodes(res, 16, iheader->biWidth, iheader->biHeight, &blueblocks2, reslength);
 	decompressBlockCodes(blueCode2, 16, iheader->biWidth, iheader->biHeight);
 	assertCodes(blueCode, blueCode2, blueblocks, blueblocks2);*/
@@ -1379,51 +1379,51 @@ int main()
 	//fractalCompressionStep3(green, initialBlockSize, initialBlockSize, initialBlockSize, &greenblocks, greenCode, iheader->biWidth, iheader->biHeight, 50);*/
 	//QUADTREE* greenTree = fractalCompressionStep4(green, iheader->biWidth, iheader->biHeight, 16, &greenblocks);
 	//greenCode = quadTreeToArray(greenTree, greenblocks);
-	cheader->blueDomainCount = bluelength;
+	/*cheader->blueDomainCount = bluelength;
 	cheader->greenDomainCount = greenlength;
-	cheader->redDomainCount = redlength;
+	cheader->redDomainCount = redlength;*/
 	cheader->maxblocksize = 16;
 	//SaveCompressed("fcompressed128_1.frc", fheader, iheader, cheader, blueCode, redCode, greenCode);
-	SaveCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, bluestream, redstream, greenstream);
-	delete fheader;
-	delete[] pixels;
-	delete[] blue;
-	delete[] red;
-	delete[] green;
-	delete iheader;
-	delete[] redstream;
-	delete[] bluestream;
-	delete[] greenstream;
+	//SaveCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, bluestream, redstream, greenstream);
+	//delete fheader;
+	//delete[] pixels;
+	//delete[] blue;
+	//delete[] red;
+	//delete[] green;
+	//delete iheader;
+	//delete[] redstream;
+	//delete[] bluestream;
+	//delete[] greenstream;
 	////free2Dimensions((byte**)blueCode, cheader->blueDomainCount);
 	////free2Dimensions((byte**)redCode, cheader->redDomainCount);
 	////free2Dimensions((byte**)greenCode, cheader->greenDomainCount);
-	delete cheader;
+	//delete cheader;
 	//////endofcompression
 
 	//////startofdecompression
-	fheader = new BITMAPFILEHEADER();
-	iheader = new BITMAPINFOHEADER(); 
-	cheader = new HEADEROFFCOMFILE(); 
-	byte** pbluestream = new byte*();
-	byte** predstream = new byte*();
-	byte** pgreenstream = new byte*();
-	int bluecodecount = 0;
-	int redcodecount = 0;
-	int greencodecount = 0;
-	LoadCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, pbluestream, predstream, pgreenstream);
-	BLOCKCODE** ptoblueCode = bitstreamToBlockCodes(*pbluestream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &bluecodecount, cheader->blueDomainCount);
-	BLOCKCODE** ptoredCode = bitstreamToBlockCodes(*predstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &redcodecount, cheader->redDomainCount);
-	BLOCKCODE** ptogreenCode = bitstreamToBlockCodes(*pgreenstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &greencodecount, cheader->greenDomainCount);
+	//fheader = new BITMAPFILEHEADER();
+	//iheader = new BITMAPINFOHEADER(); 
+	//cheader = new HEADEROFFCOMFILE(); 
+	//byte** pbluestream = new byte*();
+	//byte** predstream = new byte*();
+	//byte** pgreenstream = new byte*();
+	//int bluecodecount = 0;
+	//int redcodecount = 0;
+	//int greencodecount = 0;
+	//LoadCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, pbluestream, predstream, pgreenstream);
+	//BLOCKCODE** ptoblueCode = bitstreamToBlockCodes(*pbluestream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &bluecodecount, cheader->blueDomainCount);
+	//BLOCKCODE** ptoredCode = bitstreamToBlockCodes(*predstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &redcodecount, cheader->redDomainCount);
+	//BLOCKCODE** ptogreenCode = bitstreamToBlockCodes(*pgreenstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &greencodecount, cheader->greenDomainCount);
 	////LoadCompressed("fcompressed128_1.frc", fheader, iheader, cheader, ptoblueCode, ptoredCode, ptogreenCode);
-	decompressBlockCodes(ptoblueCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
-	decompressBlockCodes(ptoredCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
-	decompressBlockCodes(ptogreenCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
-	assertCodes(blueCode, ptoblueCode, blueblocks, bluecodecount);
-	assertCodes(redCode, ptoredCode, redblocks, redcodecount);
-	assertCodes(greenCode, ptogreenCode, greenblocks, greencodecount);
-	byte* bluePixels = fractalDecompressionStep3(ptoblueCode, iheader->biWidth, iheader->biHeight, bluecodecount);
-	byte* redPixels = fractalDecompressionStep3(ptoredCode, iheader->biWidth, iheader->biHeight, redcodecount);
-	byte* greenPixels = fractalDecompressionStep3(ptogreenCode, iheader->biWidth, iheader->biHeight, greencodecount);
+	//decompressBlockCodes(ptoblueCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	//decompressBlockCodes(ptoredCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	//decompressBlockCodes(ptogreenCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	//assertCodes(blueCode, ptoblueCode, blueblocks, bluecodecount);
+	//assertCodes(redCode, ptoredCode, redblocks, redcodecount);
+	//assertCodes(greenCode, ptogreenCode, greenblocks, greencodecount);
+	byte* bluePixels = fractalDecompressionStep3(blueCode, iheader->biWidth, iheader->biHeight, blueblocks);
+	byte* redPixels = fractalDecompressionStep3(redCode, iheader->biWidth, iheader->biHeight, redblocks);
+	byte* greenPixels = fractalDecompressionStep3(greenCode, iheader->biWidth, iheader->biHeight, greenblocks);
 	pixels = new byte[iheader->biSizeImage];//чет фигня какаято
 	colorChannelCombinator(pixels, bluePixels, greenPixels, redPixels, iheader->biWidth, iheader->biHeight);
 	SavePixels("r128_11.bmp", pixels, fheader, iheader);

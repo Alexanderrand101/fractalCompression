@@ -14,8 +14,8 @@ G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(42
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(49): warning : declaration requires a typedef name
 G:/═ютр  яряър (2)/fractalCompression/fractalCompression/kernel.cu(57): warning : declaration requires a typedef name
   kernel.cu
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(891): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
-G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(987): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(612): warning C4244: '=' : conversion from 'float' to 'short', possible loss of data
+G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(987): warning C4244: '=' : conversion from 'float' to 'short', possible loss of data
 G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1146): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
 G:/Новая папка (2)/fractalCompression/fractalCompression/kernel.cu(1159): warning C4244: '=' : conversion from 'float' to 'byte', possible loss of data
   fractalCompression.vcxproj -> G:\Новая папка (2)\fractalCompression\x64\Debug\fractalCompression.exe
