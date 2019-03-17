@@ -5,16 +5,49 @@ VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fractalCompression", "fractalCompression\fractalCompression.vcxproj", "{3304FA5A-D9BA-44D8-BA48-8750F0490095}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicVisualInterface", "BasicVisualInterface\BasicVisualInterface.csproj", "{33C2894E-AB29-4BE5-B423-AAB244B81606}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
+		FDecompLib|Any CPU = FDecompLib|Any CPU
+		FDecompLib|x64 = FDecompLib|x64
+		Library|Any CPU = Library|Any CPU
+		Library|x64 = Library|x64
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Debug|x64.ActiveCfg = Debug|x64
 		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Debug|x64.Build.0 = Debug|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.FDecompLib|Any CPU.ActiveCfg = FDecompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.FDecompLib|x64.ActiveCfg = FDecompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.FDecompLib|x64.Build.0 = FDecompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Library|Any CPU.ActiveCfg = FDecompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Library|Any CPU.Build.0 = FDecompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Library|x64.ActiveCfg = FCompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Library|x64.Build.0 = FCompLib|x64
+		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Release|Any CPU.ActiveCfg = Release|x64
 		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Release|x64.ActiveCfg = Release|x64
 		{3304FA5A-D9BA-44D8-BA48-8750F0490095}.Release|x64.Build.0 = Release|x64
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Debug|x64.Build.0 = Debug|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.FDecompLib|Any CPU.ActiveCfg = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.FDecompLib|Any CPU.Build.0 = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.FDecompLib|x64.ActiveCfg = Debug|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.FDecompLib|x64.Build.0 = Debug|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Library|Any CPU.ActiveCfg = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Library|Any CPU.Build.0 = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Library|x64.ActiveCfg = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Library|x64.Build.0 = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Release|x64.ActiveCfg = Release|Any CPU
+		{33C2894E-AB29-4BE5-B423-AAB244B81606}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

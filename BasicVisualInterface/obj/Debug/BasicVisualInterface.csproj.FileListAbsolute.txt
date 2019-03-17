@@ -1,0 +1,10 @@
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.Form1.resources
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.Properties.Resources.resources
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.csproj.GenerateResource.Cache
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.csproj.CoreCompileInputs.cache
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\bin\Debug\BasicVisualInterface.exe.config
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\bin\Debug\BasicVisualInterface.exe
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\bin\Debug\BasicVisualInterface.pdb
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.exe
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.pdb
+G:\Новая папка (2)\fractalCompression\BasicVisualInterface\obj\Debug\BasicVisualInterface.csprojResolveAssemblyReference.cache
