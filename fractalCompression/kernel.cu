@@ -1130,8 +1130,8 @@ int LoadCompressed2(const char* fname, BITMAPFILEHEADER* fheader, BITMAPINFOHEAD
 		return 2;
 	}
 	*bluestream = new byte[minbytesforbits(cheader->blueDomainCount)];//чет фигня какаято
-	*greenstream = new byte[minbytesforbits(cheader->redDomainCount)];//чет фигня какаято
-	*redstream = new byte[minbytesforbits(cheader->greenDomainCount)];//чет фигня какаято
+	*greenstream = new byte[minbytesforbits(cheader->greenDomainCount)];//чет фигня какаято
+	*redstream = new byte[minbytesforbits(cheader->redDomainCount)];//чет фигня какаято
 	file.read((char*)*bluestream, minbytesforbits(cheader->blueDomainCount));
 	file.read((char*)*greenstream, minbytesforbits(cheader->greenDomainCount));
 	file.read((char*)*redstream, minbytesforbits(cheader->redDomainCount));
@@ -1283,6 +1283,27 @@ void assertCodes(BLOCKCODE** code1, BLOCKCODE** code2, int size1, int size2)
 	}
 }
 
+void deleteQuadNode(QUADNODE* node) {
+	if (node->blockCode == nullptr) {
+		for (int i = 0; i < 4; i++)
+			deleteQuadNode(node->quadNodes[i]);
+	}
+	delete node;
+}
+
+void deleteQuadTree(QUADTREE* tree) {
+	for (int i = 0; i < tree->width * tree->height; i++)
+		deleteQuadNode(tree->quadNodes[i]);
+	delete tree;
+}
+
+void deleteCodes(BLOCKCODE** codes, int n) {
+	for (int i = 0; i < n; i++) {
+		delete codes[i];
+	}
+	delete[] codes;
+}
+
 int main()
 {
 	/*int length = 0, codecount = 0;
@@ -1354,14 +1375,20 @@ int main()
 	BLOCKCODE** blueCode = quadTreeToArray(blueTree, blueblocks);
 	int bluelength = 0;
 	byte* bluestream = blockcodesToBitStream(blueCode, 16, iheader->biWidth, iheader->biHeight, blueblocks, &bluelength);
+	deleteQuadTree(blueTree);
+	deleteCodes(blueCode, blueblocks);
 	QUADTREE* redTree = fractalCompressionStep4(red, iheader->biWidth, iheader->biHeight, 16, &redblocks);
 	BLOCKCODE** redCode = quadTreeToArray(redTree, redblocks);
 	int redlength = 0;
 	byte* redstream = blockcodesToBitStream(redCode, 16, iheader->biWidth, iheader->biHeight, redblocks, &redlength);
+	deleteQuadTree(redTree);
+	deleteCodes(redCode, redblocks);
 	QUADTREE* greenTree = fractalCompressionStep4(green, iheader->biWidth, iheader->biHeight, 16, &greenblocks);
 	BLOCKCODE** greenCode = quadTreeToArray(greenTree, greenblocks);
 	int greenlength = 0;
 	byte* greenstream = blockcodesToBitStream(greenCode, 16, iheader->biWidth, iheader->biHeight, greenblocks, &greenlength);
+	deleteQuadTree(greenTree);
+	deleteCodes(greenCode, greenblocks);
 	/*BLOCKCODE** blueCode2 = bitstreamToBlockCodes(res, 16, iheader->biWidth, iheader->biHeight, &blueblocks2, reslength);
 	decompressBlockCodes(blueCode2, 16, iheader->biWidth, iheader->biHeight);
 	assertCodes(blueCode, blueCode2, blueblocks, blueblocks2);*/
@@ -1401,29 +1428,38 @@ int main()
 	//////endofcompression
 
 	//////startofdecompression
-	fheader = new BITMAPFILEHEADER();
-	iheader = new BITMAPINFOHEADER(); 
-	cheader = new HEADEROFFCOMFILE(); 
-	byte** pbluestream = new byte*();
-	byte** predstream = new byte*();
-	byte** pgreenstream = new byte*();
+	fheader = new BITMAPFILEHEADER;
+	iheader = new BITMAPINFOHEADER; 
+	cheader = new HEADEROFFCOMFILE; 
+	byte** pbluestream = new byte*;
+	byte** predstream = new byte*;
+	byte** pgreenstream = new byte*;
 	int bluecodecount = 0;
 	int redcodecount = 0;
 	int greencodecount = 0;
 	LoadCompressed2("fcompressed128_1.frc", fheader, iheader, cheader, pbluestream, predstream, pgreenstream);
 	BLOCKCODE** ptoblueCode = bitstreamToBlockCodes(*pbluestream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &bluecodecount, cheader->blueDomainCount);
+	delete[] * pbluestream;
 	BLOCKCODE** ptoredCode = bitstreamToBlockCodes(*predstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &redcodecount, cheader->redDomainCount);
+	delete[] * predstream;
 	BLOCKCODE** ptogreenCode = bitstreamToBlockCodes(*pgreenstream, cheader->maxblocksize, iheader->biWidth, iheader->biHeight, &greencodecount, cheader->greenDomainCount);
+	delete[] * pgreenstream;
 	////LoadCompressed("fcompressed128_1.frc", fheader, iheader, cheader, ptoblueCode, ptoredCode, ptogreenCode);
+	
 	decompressBlockCodes(ptoblueCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
 	decompressBlockCodes(ptoredCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
+	//delete[] * predstream;
 	decompressBlockCodes(ptogreenCode, cheader->maxblocksize, iheader->biWidth, iheader->biHeight);
-	assertCodes(blueCode, ptoblueCode, blueblocks, bluecodecount);
-	assertCodes(redCode, ptoredCode, redblocks, redcodecount);
-	assertCodes(greenCode, ptogreenCode, greenblocks, greencodecount);
+	//delete[] *pgreenstream;
+	//assertCodes(blueCode, ptoblueCode, blueblocks, bluecodecount);
+	//assertCodes(redCode, ptoredCode, redblocks, redcodecount);
+	//assertCodes(greenCode, ptogreenCode, greenblocks, greencodecount);
 	byte* bluePixels = fractalDecompressionStep3(ptoblueCode, iheader->biWidth, iheader->biHeight, bluecodecount);
 	byte* redPixels = fractalDecompressionStep3(ptoredCode, iheader->biWidth, iheader->biHeight, redcodecount);
 	byte* greenPixels = fractalDecompressionStep3(ptogreenCode, iheader->biWidth, iheader->biHeight, greencodecount);
+	deleteCodes(ptoblueCode, bluecodecount);
+	deleteCodes(ptogreenCode, greencodecount);
+	deleteCodes(ptoredCode, redcodecount);
 	pixels = new byte[iheader->biSizeImage];//чет фигня какаято
 	colorChannelCombinator(pixels, bluePixels, greenPixels, redPixels, iheader->biWidth, iheader->biHeight);
 	SavePixels("r128_11.bmp", pixels, fheader, iheader);
